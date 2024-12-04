@@ -1,0 +1,16 @@
+package model.BO;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import model.bean.MergeVideoHandler;
+
+public class MergeVideoMangerBO {
+	public static HashMap<Integer, MergeVideoHandler> progressManagerMap = new HashMap<Integer, MergeVideoHandler>();
+	private static int nextID = 1;
+	
+	synchronized public static int getNextID() {
+		return nextID++;
+	}
+}

@@ -1,0 +1,42 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<%int pID = (int)request.getSession().getAttribute("pID"); %>
+	<h1>Progress<label for="pID"><%=pID %></label> is going on</h1>
+	<progress id = "progressBar" value = "0" max = "100"></progress>
+	<label id = "progressText">0%</label>
+	<div id="downloadForm" style="display:none">
+		<h3>MERGE SUCCESSFUL</h3>
+		<form action="DownloadServlet" method ="post">
+			<input type = "submit" value = "Download">
+		</form>
+	</div>
+</body>
+<script>
+    const pid = document.querySelector("label[for='pID']").textContent;
+	const progressBar = document.getElementById("progressBar");
+	const progressText = document.getElementById("progressText");
+    const downloadForm = document.getElementById("downloadForm");
+    var intervalID = setInterval(()=>{
+        fetch("http://localhost:8080/MergeVideo/MergeVideoServlet?pID="+pid)
+        .then(response=>{
+            return response.json;
+        })
+        .then(data=>{
+            const progress = data.progress;
+            progressBar.value = Math.round(progress*100)/100;
+            progressText.textContent = ""+progress+"%";
+            if (Math.abs(progress-100)<1e-6){
+                clearInterval(intervalID);
+            }
+            downloadForm.style = "display:block";
+        });
+    },1000)
+</script>
+</html>

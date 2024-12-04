@@ -1,0 +1,72 @@
+package model.bean;
+
+public class MergeVideoHandler extends Thread {
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		try {
+            // Get video duration
+            double totalDuration = getVideoDuration(ffmpegPath, inputVideo);
+            if (totalDuration <= 0) {
+                System.err.println("Failed to retrieve video duration.");
+                return;
+            }
+
+            // Start FFmpeg process
+            String command = String.format("%s -i %s -filter:v scale=1280:720 -y %s", ffmpegPath, inputVideo, outputVideo);
+            ProcessBuilder processBuilder = new ProcessBuilder(command.split(" "));
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
+
+            // Monitor progress
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                Pattern timePattern = Pattern.compile("time=(\\d{2}):(\\d{2}):(\\d{2}\\.\\d{2})");
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line); // For debugging
+                    Matcher matcher = timePattern.matcher(line);
+                    if (matcher.find()) {
+                        double currentTime = convertTimeToSeconds(matcher.group(1), matcher.group(2), matcher.group(3));
+                        int progress = (int) ((currentTime / totalDuration) * 100);
+                        System.out.printf("Progress: %d%%\r", progress); // Console progress bar
+                    }
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                System.out.println("\nFFmpeg process completed successfully.");
+            } else {
+                System.err.println("\nFFmpeg process failed.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+	}
+	
+	private static double getVideoDuration(String ffmpegPath, String inputVideo) throws Exception {
+        String command = String.format("%s -i %s", ffmpegPath, inputVideo);
+        ProcessBuilder processBuilder = new ProcessBuilder(command.split(" "));
+        processBuilder.redirectErrorStream(true);
+        Process process = processBuilder.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            String line;
+            Pattern durationPattern = Pattern.compile("Duration: (\\d{2}):(\\d{2}):(\\d{2}\\.\\d{2})");
+            while ((line = reader.readLine()) != null) {
+                Matcher matcher = durationPattern.matcher(line);
+                if (matcher.find()) {
+                    return convertTimeToSeconds(matcher.group(1), matcher.group(2), matcher.group(3));
+                }
+            }
+        }
+        process.waitFor();
+        return -1;
+    }
+
+    private static double convertTimeToSeconds(String hours, String minutes, String seconds) {
+        return Integer.parseInt(hours) * 3600 + Integer.parseInt(minutes) * 60 + Double.parseDouble(seconds);
+    }
+}
+}

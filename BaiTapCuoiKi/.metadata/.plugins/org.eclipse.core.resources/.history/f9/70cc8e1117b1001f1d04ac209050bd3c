@@ -1,0 +1,11 @@
+package model.BO;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import model.bean.MergeVideoHandler;
+
+public class MergeVideoMangerBO {
+	public Map<Long, MergeVideoHandler> progressManagerMap = new HashMap<Long, MergeVideoHandler>();
+	
+}
